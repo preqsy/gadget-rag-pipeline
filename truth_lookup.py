@@ -9,6 +9,7 @@ from sqlalchemy import create_engine
 
 from app.retrieval.embedder import LlamaIndexHFEmbedder
 from app.retrieval.qdrant_indexer import QdrantGadgetIndexer
+from app.retrieval.qdrant_retriever import QdrantGadgetRetriever
 from app.truth.truth_store import TruthStore
 from qdrant_client import QdrantClient, qdrant_client
 
@@ -43,8 +44,21 @@ def main() -> int:
     trace = store.debug_get_latest_by_name(raw_name)
 
     print("I'm not here")
+    qdrant_client = QdrantClient(
+        QDRANT_URL,
+        api_key=QDRANT_API_KEY,
+    )
+    hug = LlamaIndexHFEmbedder()
+    # qdrant = QdrantGadgetIndexer(engine=engine, embedder=hug, qdrant=qdrant_client)
+    qdrant_retriever = QdrantGadgetRetriever(qdrant=qdrant_client, embedder=hug)
 
-    pprint(trace, sort_dicts=False)
+    result = qdrant_retriever.search("iphone")
+
+    pprint(result)
+
+    # qdrant.index_all()
+
+    # pprint(trace, sort_dicts=False)
     return 0
 
 
