@@ -73,21 +73,21 @@ class QdrantGadgetIndexer:
         print("Indexing complete")
 
 
-database_url = (
-    "mssql+pyodbc://sa:50610903Da$@localhost:1433/NetworthChecker"
-    "?driver=ODBC+Driver+17+for+SQL+Server"
-    "&TrustServerCertificate=yes"
-)
+# database_url = (
+#     "mssql+pyodbc://sa:50610903Da$@localhost:1433/NetworthChecker"
+#     "?driver=ODBC+Driver+17+for+SQL+Server"
+#     "&TrustServerCertificate=yes"
+# )
 
 # pool_pre_ping avoids stale connections in long-running services
-engine = create_engine(database_url, pool_pre_ping=True)
+# engine = create_engine(database_url, pool_pre_ping=True)
 
-qdrant_client = QdrantClient(
-    QDRANT_URL,
-    api_key=QDRANT_API_KEY,
-    timeout=60,
-)
-hug = LlamaIndexHFEmbedder()
-qdrant = QdrantGadgetIndexer(engine=engine, embedder=hug, qdrant=qdrant_client)
+# qdrant_client = QdrantClient(
+#     QDRANT_URL,
+#     api_key=QDRANT_API_KEY,
+#     timeout=60,
+# )
+# hug = LlamaIndexHFEmbedder()
+# qdrant = QdrantGadgetIndexer(engine=engine, embedder=hug, qdrant=qdrant_client)
 
-qdrant.index_all()
+# qdrant.index_all()

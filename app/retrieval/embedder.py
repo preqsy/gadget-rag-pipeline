@@ -13,8 +13,8 @@ class LlamaIndexHFEmbedder:
         return self.embed_model.get_text_embedding(text)
 
 
-# hug = LlamaIndexHFEmbedder()
+hug = LlamaIndexHFEmbedder()
 
-# embedded = hug.embed("Hello World")
+embedded = hug.embed("Hello")
 
-# print(f"Embedded values: {embedded}")
+print(f"Embedded values: {embedded}")

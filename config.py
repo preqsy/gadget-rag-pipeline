@@ -6,6 +6,7 @@ QDRANT_URL = (
 )
 
 QDRANT_COLLECTION = "gadgets_name_index"
+EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 # from qdrant_client import QdrantClient
 
 # qdrant_client = QdrantClient(
