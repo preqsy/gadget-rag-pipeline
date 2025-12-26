@@ -7,6 +7,11 @@ QDRANT_URL = (
 
 QDRANT_COLLECTION = "gadgets_name_index"
 EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+DATABASE_URL = (
+    "mssql+pyodbc://sa:50610903Da$@localhost:1433/NetworthChecker"
+    "?driver=ODBC+Driver+17+for+SQL+Server"
+    "&TrustServerCertificate=yes"
+)
 # from qdrant_client import QdrantClient
 
 # qdrant_client = QdrantClient(
