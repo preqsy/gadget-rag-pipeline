@@ -7,7 +7,6 @@ from pprint import pprint
 
 from qdrant_client import QdrantClient
 
-# from  import QDRANT_URL
 from app.retrieval.embedder import LlamaIndexHFEmbedder
 from app.retrieval.qdrant_retrieval import QdrantGadgetRetriever
 from config import EMBED_MODEL, QDRANT_API_KEY, QDRANT_URL

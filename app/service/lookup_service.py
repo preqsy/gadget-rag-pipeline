@@ -48,7 +48,7 @@ class PriceLookupService:
             selected = resolution.selected
             assert selected is not None
 
-            verified = self.truth_store.get_latest_by_name(selected.name)
+            verified = self.truth_store.get_latest_by_name(selected.gadget)
 
             if verified is None:
                 return {

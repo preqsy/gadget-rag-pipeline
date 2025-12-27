@@ -3,6 +3,7 @@ from qdrant_client import QdrantClient, qdrant_client
 from qdrant_client.http.models import VectorParams, Distance, PointStruct
 from sqlalchemy import Engine, select, create_engine
 
+from app.domain.models import GadgetModel
 from app.retrieval.embedder import LlamaIndexHFEmbedder
 from config import QDRANT_API_KEY, QDRANT_COLLECTION, QDRANT_URL
 from app.db.schema import gadgets
@@ -32,10 +33,25 @@ class QdrantGadgetIndexer:
         )
 
     def fetch_all_gadgets(self) -> List[Dict]:
-        stmt = select(gadgets.c.id, gadgets.c.name).order_by(gadgets.c.id.asc())
+        stmt = select(
+            gadgets.c.id,
+            gadgets.c.name,
+            gadgets.c.price,
+            gadgets.c.scrapedAt,
+            gadgets.c.source,
+        ).order_by(gadgets.c.id.asc())
         with self.engine.connect() as conn:
             rows = conn.execute(stmt).mappings().all()
-        return [{"id": r["id"], "name": r["name"]} for r in rows]
+
+        return [
+            {
+                "id": r["id"],
+                "gadget": self.format_data_to_include_price(
+                    r["name"], r["price"], r["source"], r["scrapedAt"]
+                ),
+            }
+            for r in rows
+        ]
 
     def index_all(self, batch_size: int = 20):
         print("I am here oo")
@@ -43,19 +59,19 @@ class QdrantGadgetIndexer:
         if not items:
             print("No gadgets found in SQL.")
             return
-        first_vec = self.embedder.embed(items[0]["name"])
+        first_vec = self.embedder.embed(items[0]["gadget"])
         self.ensure_collection(vector_size=len(first_vec))
 
         print(f"First item: {items[0]}")
-        print(f"First vector: {first_vec}")
+        # print(f"First vector: {first_vec}")
         points: List[PointStruct] = []
         for idx, item in enumerate(items, start=1):
-            vec = self.embedder.embed(item["name"])
+            vec = self.embedder.embed(item["gadget"])
             points.append(
                 PointStruct(
                     id=item["id"],
                     vector=vec,
-                    payload={"name": item["name"]},
+                    payload={"gadget": item["gadget"]},
                 )
             )
 
@@ -72,22 +88,9 @@ class QdrantGadgetIndexer:
 
         print("Indexing complete")
 
-
-# database_url = (
-#     "mssql+pyodbc://sa:50610903Da$@localhost:1433/NetworthChecker"
-#     "?driver=ODBC+Driver+17+for+SQL+Server"
-#     "&TrustServerCertificate=yes"
-# )
-
-# pool_pre_ping avoids stale connections in long-running services
-# engine = create_engine(database_url, pool_pre_ping=True)
-
-# qdrant_client = QdrantClient(
-#     QDRANT_URL,
-#     api_key=QDRANT_API_KEY,
-#     timeout=60,
-# )
-# hug = LlamaIndexHFEmbedder()
-# qdrant = QdrantGadgetIndexer(engine=engine, embedder=hug, qdrant=qdrant_client)
-
-# qdrant.index_all()
+    def format_data_to_include_price(
+        self, name: str, price: int, source: str, scrapedAt
+    ) -> str:
+        return (
+            f"{name}, priced at {price}, sourced from {source}, scraped on {scrapedAt}"
+        )

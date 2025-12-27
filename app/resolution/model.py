@@ -10,14 +10,14 @@ ResolutionStatus = Literal["resolved", "ambiguous", "not_found"]
 @dataclass(frozen=True)
 class Candidate:
     gadget_id: int
-    name: str
+    gadget: str
     score: float
 
 
 @dataclass(frozen=True)
 class ResolvedCandidate:
     gadget_id: int
-    name: str
+    gadget: str
     qdrant_score: float
     lexical_score: float
     combined_score: float

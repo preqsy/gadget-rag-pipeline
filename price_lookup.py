@@ -49,7 +49,7 @@ def main() -> int:
     )
 
     output = service.lookup(query, k=10, debug=True)
-    # pprint(output, sort_dicts=False)
+    pprint(output, sort_dicts=False)
 
     return 0
 
