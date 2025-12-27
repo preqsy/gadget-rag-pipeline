@@ -100,12 +100,13 @@ class DeterministicResolver:
 
         scored: List[ResolvedCandidate] = []
         for c in candidates:
+            gadget_name = c.gadget.split(",")[0]
             lex = self._lexical_score(norm_query, c.gadget)
             combined = self._combined_score(c.score, lex)
             scored.append(
                 ResolvedCandidate(
                     gadget_id=c.gadget_id,
-                    gadget=c.gadget,
+                    gadget=gadget_name,
                     qdrant_score=c.score,
                     lexical_score=lex,
                     combined_score=combined,
