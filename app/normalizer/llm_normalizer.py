@@ -1,9 +1,12 @@
 from __future__ import annotations
 from dataclasses import dataclass
+import logging
 import json
 import re
 from typing import Any, Dict, Optional, Tuple
 from llama_index.llms.ollama import Ollama
+
+from prompts import SYSTEM_QUERY_PROMPT
 
 
 @dataclass(frozen=True)
@@ -14,43 +17,11 @@ class NormalizationResult:
     used_llm: bool = False
 
 
+logger = logging.getLogger(__name__)
+
+
 class LLMQueryNormalizer:
-    SYSTEM_PROMPT = """You MUST output exactly one JSON object and NOTHING ELSE.
-Any text outside JSON is forbidden.
-
-Task: Normalize a gadget search query.
-
-Rules:
-
-Preserve meaning.
-
-Fix obvious typos.
-
-Insert missing spaces.
-
-Convert to lowercase.
-
-Output:
-
-JSON only.
-
-Exactly two keys: normalized_query, notes.
-
-No explanations.
-
-No reasoning.
-
-No examples.
-
-No markdown.
-
-No extra whitespace.
-
-If rules cannot be applied, still return JSON.
-
-Example:
-{"normalized_query":"iphone 12","notes":"corrected ipheon -> iphone"}
-"""
+    SYSTEM_PROMPT = SYSTEM_QUERY_PROMPT
 
     def __init__(self, model: str = "qwen2.5:7b", temperature: float = 0.0) -> None:
         self.llm = Ollama(
@@ -59,6 +30,7 @@ Example:
             request_timeout=60.0,
             additional_kwargs={"num_ctx": 2048, "num_predict": 128},
         )
+        logger.info(f"Starting LLM service with model: {model}")
 
     @staticmethod
     def _extract_json(text: str) -> str:
@@ -113,8 +85,6 @@ Query: "{raw}" """
             system_prompt=self.SYSTEM_PROMPT,
             prompt=prompt,
         ).text
-
-        print(f"AI response: {resp}")
 
         try:
             json_text = self._extract_json(resp)
