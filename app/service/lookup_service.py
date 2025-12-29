@@ -1,5 +1,6 @@
 from dataclasses import asdict
 from typing import Any, Dict
+from app.normalizer.llm_normalizer import LLMQueryNormalizer
 from app.resolution.model import Candidate
 from app.resolution.resolver import DeterministicResolver
 from app.retrieval.qdrant_retrieval import QdrantGadgetRetriever
@@ -25,10 +26,12 @@ class PriceLookupService:
         retriever: QdrantGadgetRetriever,
         resolver: DeterministicResolver,
         truth_store: TruthStore,
+        normalizer: LLMQueryNormalizer,
     ) -> None:
         self.retriever = retriever
         self.resolver = resolver
         self.truth_store = truth_store
+        self.normalizer = normalizer
 
     def lookup(
         self,
@@ -36,12 +39,20 @@ class PriceLookupService:
         k: int = 10,
         debug: bool = True,
     ) -> Dict[str, Any]:
+        norm = self.normalizer.normalize(query)
+        # normalized_query = query
+        normalized_query = norm.normalized_query
+
+        print(f"****Normalized query: {normalized_query}")
         # 1) Retrieve
-        retrieved = self.retriever.search(query, k=k)
+        retrieved = self.retriever.search(normalized_query, k=k)
         candidates = [Candidate(**r) for r in retrieved]
 
         # 2) Resolve
-        resolution = self.resolver.resolve(query=query, candidates=candidates)
+        resolution = self.resolver.resolve(
+            query=normalized_query,
+            candidates=candidates,
+        )
 
         # 3) Branch
         if resolution.status == "resolved":
@@ -53,7 +64,7 @@ class PriceLookupService:
             if verified is None:
                 return {
                     "status": "not_found",
-                    "query": query,
+                    "query": normalized_query,
                     "reason": "resolved_name_not_found_in_sql",
                     "match": asdict(selected),
                     "debug": (
@@ -68,7 +79,7 @@ class PriceLookupService:
 
             result = {
                 "status": "resolved",
-                "query": query,
+                "query": normalized_query,
                 "match": asdict(selected),
                 "verified_price": asdict(verified),
             }
@@ -76,13 +87,13 @@ class PriceLookupService:
         elif resolution.status == "ambiguous":
             result = {
                 "status": "ambiguous",
-                "query": query,
+                "query": normalized_query,
                 "alternatives": [asdict(a) for a in resolution.alternatives],
             }
         else:
             result = {
                 "status": "not_found",
-                "query": query,
+                "query": normalized_query,
                 "alternatives": [asdict(a) for a in resolution.alternatives],
             }
 
