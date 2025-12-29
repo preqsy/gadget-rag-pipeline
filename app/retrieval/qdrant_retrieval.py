@@ -33,7 +33,7 @@ class QdrantGadgetRetriever:
         return [
             {
                 "gadget_id": r.id,
-                "name": r.payload.get("name") if r.payload else None,
+                "gadget": r.payload.get("gadget") if r.payload else None,
                 "score": r.score,
             }
             for r in results.points

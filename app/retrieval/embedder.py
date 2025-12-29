@@ -15,6 +15,6 @@ class LlamaIndexHFEmbedder:
 
 hug = LlamaIndexHFEmbedder()
 
-embedded = hug.embed("Hello")
+# embedded = hug.embed("Hello")
 
-print(f"Embedded values: {embedded}")
+# print(f"Embedded values: {embedded}")

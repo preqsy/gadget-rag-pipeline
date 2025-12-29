@@ -7,7 +7,7 @@ from typing import Optional
 from sqlalchemy import Engine, select
 
 from app.db.schema import gadgets
-from app.domain.models import VerifiedPrice
+from app.domain.models import GadgetModel
 
 
 class TruthStore:
@@ -24,7 +24,7 @@ class TruthStore:
         # Your DB names are normalized to lowercase
         return name.strip().lower()
 
-    def get_latest_by_name(self, name: str) -> Optional[VerifiedPrice]:
+    def get_latest_by_name(self, name: str) -> Optional[GadgetModel]:
         """
         Deterministically fetch the latest price row for an exact gadget name match.
 
@@ -32,7 +32,7 @@ class TruthStore:
           - ORDER BY scrapedAt DESC, id DESC
 
         Returns:
-          - VerifiedPrice if found
+          - GadgetModel if found
           - None if not found
         """
         normalized = self.normalize_name(name)
@@ -59,7 +59,7 @@ class TruthStore:
             return None
 
         # Map scrapedAt -> scraped_at (Python convention)
-        return VerifiedPrice(
+        return GadgetModel(
             id=row["id"],
             name=row["name"],
             price=row["price"],

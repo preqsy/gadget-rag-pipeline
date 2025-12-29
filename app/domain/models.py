@@ -6,9 +6,9 @@ from datetime import datetime
 
 
 @dataclass(frozen=True)
-class VerifiedPrice:
+class GadgetModel:
     """
-    VerifiedPrice is a deterministic truth payload.
+    GadgetModel is a deterministic truth payload.
     It must come only from SQL Server (gadgets table).
     """
 
