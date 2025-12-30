@@ -7,6 +7,7 @@ from pprint import pprint
 from sqlalchemy import create_engine
 from qdrant_client import QdrantClient
 
+from app.normalizer.llm_normalizer import LLMQueryNormalizer
 from config import (
     DATABASE_URL,
     QDRANT_URL,
@@ -39,13 +40,17 @@ def main() -> int:
     qdrant = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
     embedder = LlamaIndexHFEmbedder()
     retriever = QdrantGadgetRetriever(qdrant=qdrant, embedder=embedder)
+    llm_normalizer = LLMQueryNormalizer()
 
     # Resolution
     resolver = DeterministicResolver()
 
     # Pipeline
     service = PriceLookupService(
-        retriever=retriever, resolver=resolver, truth_store=truth_store
+        retriever=retriever,
+        resolver=resolver,
+        truth_store=truth_store,
+        normalizer=llm_normalizer,
     )
 
     output = service.lookup(query, k=10, debug=False)
