@@ -1,10 +1,15 @@
 from dataclasses import asdict
 from typing import Any, Dict
+
+from qdrant_client import QdrantClient
+from sqlalchemy import create_engine
 from app.normalizer.llm_normalizer import LLMQueryNormalizer
 from app.resolution.model import Candidate
 from app.resolution.resolver import DeterministicResolver
+from app.retrieval.embedder import LlamaIndexHFEmbedder
 from app.retrieval.qdrant_retrieval import QdrantGadgetRetriever
 from app.truth.truth_store import TruthStore
+from config import DATABASE_URL, QDRANT_API_KEY, QDRANT_URL
 
 
 class PriceLookupService:
@@ -103,3 +108,23 @@ class PriceLookupService:
                 "resolution_trace": resolution.trace,
             }
         return result
+
+
+engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+truth_store = TruthStore(engine)
+
+# Retrieval
+qdrant = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
+embedder = LlamaIndexHFEmbedder()
+retriever = QdrantGadgetRetriever(qdrant=qdrant, embedder=embedder)
+llm_normalizer = LLMQueryNormalizer()
+resolver = DeterministicResolver()
+
+
+async def get_price_lookup_service():
+    return PriceLookupService(
+        retriever=retriever,
+        truth_store=truth_store,
+        normalizer=llm_normalizer,
+        resolver=resolver,
+    )

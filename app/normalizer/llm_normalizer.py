@@ -23,7 +23,12 @@ logger = logging.getLogger(__name__)
 class LLMQueryNormalizer:
     SYSTEM_PROMPT = SYSTEM_QUERY_PROMPT
 
-    def __init__(self, model: str = "qwen2.5:7b", temperature: float = 0.0) -> None:
+    def __init__(
+        self,
+        model: str = "llama3.2:3b",
+        # model: str = "qwen2.5:7b",
+        temperature: float = 0.0,
+    ) -> None:
         self.llm = Ollama(
             model=model,
             temperature=temperature,
@@ -76,8 +81,8 @@ class LLMQueryNormalizer:
     def normalize(self, query: str) -> NormalizationResult:
         raw = query
         prompt = f"""Normalize this gadget query strictly as JSON to match the real life name(Nigerian gadgets).  
-Return only a single JSON object with exactly two keys: "normalized_query" and "notes".  
-Do not output anything else, no explanations, no markdown, no extra text.  
+        Return only a single JSON object with exactly two keys: "normalized_query" and "notes".  
+        Do not output anything else, no explanations, no markdown, no extra text and MAKE SURE THE normalized_query IS A GADGET.  
 
 Query: "{raw}" """
 
