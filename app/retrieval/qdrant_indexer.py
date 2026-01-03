@@ -19,12 +19,9 @@ class QdrantGadgetIndexer:
         self.embedder = embedder
 
     def ensure_collection(self, vector_size: int):
-        collections = [c.name for c in self.qdrant.get_collections().collections]
-
-        print(f"*****Collections: {collections}")
-
         existing = {c.name for c in self.qdrant.get_collections().collections}
         if QDRANT_COLLECTION in existing:
+            # self.qdrant.delete_collection(QDRANT_COLLECTION)
             return
 
         self.qdrant.create_collection(
@@ -46,32 +43,27 @@ class QdrantGadgetIndexer:
         return [
             {
                 "id": r["id"],
-                "gadget": self.format_data_to_include_price(
-                    r["name"], r["price"], r["source"], r["scrapedAt"]
-                ),
+                "name": r["name"],
             }
             for r in rows
         ]
 
     def index_all(self, batch_size: int = 20):
-        print("I am here oo")
         items = self.fetch_all_gadgets()
         if not items:
             print("No gadgets found in SQL.")
             return
-        first_vec = self.embedder.embed(items[0]["gadget"])
+        first_vec = self.embedder.embed(items[0]["name"])
         self.ensure_collection(vector_size=len(first_vec))
 
-        print(f"First item: {items[0]}")
-        # print(f"First vector: {first_vec}")
         points: List[PointStruct] = []
         for idx, item in enumerate(items, start=1):
-            vec = self.embedder.embed(item["gadget"])
+            vec = self.embedder.embed(item["name"])
             points.append(
                 PointStruct(
                     id=item["id"],
                     vector=vec,
-                    payload={"gadget": item["gadget"]},
+                    payload={"name": item["name"]},
                 )
             )
 
@@ -87,10 +79,3 @@ class QdrantGadgetIndexer:
             print(f"Upserted {len(items)}/{len(items)}")
 
         print("Indexing complete")
-
-    def format_data_to_include_price(
-        self, name: str, price: int, source: str, scrapedAt
-    ) -> str:
-        return (
-            f"{name}, priced at {price}, sourced from {source}, scraped on {scrapedAt}"
-        )

@@ -25,8 +25,8 @@ class LLMQueryNormalizer:
 
     def __init__(
         self,
-        model: str = "llama3.2:3b",
-        # model: str = "qwen2.5:7b",
+        # model: str = "llama3.2:3b",
+        model: str = "qwen2.5:7b",
         temperature: float = 0.0,
     ) -> None:
         self.llm = Ollama(

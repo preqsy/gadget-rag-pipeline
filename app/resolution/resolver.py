@@ -55,12 +55,11 @@ class DeterministicResolver:
         a_tokens = set(a.split())
         b_tokens = set(b.split())
 
-        # print(f"A token: {a_tokens} B token: {b_tokens}")
         if not a_tokens or not b_tokens:
             return 0.0
         inter = len(a_tokens & b_tokens)
         union = len(a_tokens | b_tokens)
-        # print(f"the result of the inter: {inter} union: {union}: {inter/union}")
+
         return inter / union
 
     @staticmethod
@@ -74,8 +73,6 @@ class DeterministicResolver:
         jaccard = self._token_jaccard(q, c)  # Intersection / Union
         seq = self._sequence_similarity(q, c)  # Sequence similarity
 
-        # print(f"Sequence: {seq}")
-        # print(f"_lexical_score: {0.6 * jaccard + 0.4 * seq}")
         # Token overlap matters for product names; seq helps with typos
         return 0.6 * jaccard + 0.4 * seq
 
@@ -105,13 +102,13 @@ class DeterministicResolver:
 
         scored: List[ResolvedCandidate] = []
         for c in candidates:
-            gadget_name = c.gadget.split(",")[0]
+            gadget_name = c.name
             lex = self._lexical_score(norm_query, gadget_name)
             combined = self._combined_score(c.score, lex)
             scored.append(
                 ResolvedCandidate(
                     gadget_id=c.gadget_id,
-                    gadget=gadget_name,
+                    name=gadget_name,
                     qdrant_score=c.score,
                     lexical_score=lex,
                     combined_score=combined,
@@ -133,7 +130,6 @@ class DeterministicResolver:
             and (s.lexical_score >= self.min_lexical)
         ]
 
-        # pprint(f"Acceptable Candidates: {acceptable}")
         # Determine if retrieval is "reasonable" (for ambiguous fallback)
         reasonable = [
             s
@@ -141,7 +137,6 @@ class DeterministicResolver:
             if (s.qdrant_score >= self.min_semantic_floor)
             and (s.lexical_score >= self.min_lexical_floor)
         ]
-        # pprint(f"Reasonable Candidates: {reasonable}")
 
         trace: Dict[str, Any] = {
             "query": query,

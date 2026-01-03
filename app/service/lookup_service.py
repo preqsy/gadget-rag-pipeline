@@ -1,4 +1,5 @@
 from dataclasses import asdict
+from functools import lru_cache
 from typing import Any, Dict
 
 from qdrant_client import QdrantClient
@@ -48,7 +49,6 @@ class PriceLookupService:
         # normalized_query = query
         normalized_query = norm.normalized_query
 
-        print(f"****Normalized query: {normalized_query}")
         # 1) Retrieve
         retrieved = self.retriever.search(normalized_query, k=k)
         candidates = [Candidate(**r) for r in retrieved]
@@ -64,7 +64,7 @@ class PriceLookupService:
             selected = resolution.selected
             assert selected is not None
 
-            verified = self.truth_store.get_latest_by_name(selected.gadget)
+            verified = self.truth_store.get_latest_by_name(selected.name)
 
             if verified is None:
                 return {
@@ -110,21 +110,45 @@ class PriceLookupService:
         return result
 
 
-engine = create_engine(DATABASE_URL, pool_pre_ping=True)
-truth_store = TruthStore(engine)
-
-# Retrieval
-qdrant = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
-embedder = LlamaIndexHFEmbedder()
-retriever = QdrantGadgetRetriever(qdrant=qdrant, embedder=embedder)
-llm_normalizer = LLMQueryNormalizer()
-resolver = DeterministicResolver()
+@lru_cache
+def get_engine():
+    return create_engine(DATABASE_URL, pool_pre_ping=True)
 
 
-async def get_price_lookup_service():
+@lru_cache
+def get_truth_store() -> TruthStore:
+    return TruthStore(get_engine())
+
+
+@lru_cache
+def get_qdrant_client() -> QdrantClient:
+    return QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
+
+
+@lru_cache
+def get_embedder() -> LlamaIndexHFEmbedder:
+    return LlamaIndexHFEmbedder()
+
+
+@lru_cache
+def get_retriever() -> QdrantGadgetRetriever:
+    return QdrantGadgetRetriever(qdrant=get_qdrant_client(), embedder=get_embedder())
+
+
+@lru_cache
+def get_llm_normalizer() -> LLMQueryNormalizer:
+    return LLMQueryNormalizer()
+
+
+@lru_cache
+def get_resolver() -> DeterministicResolver:
+    return DeterministicResolver()
+
+
+def get_price_lookup_service() -> PriceLookupService:
     return PriceLookupService(
-        retriever=retriever,
-        truth_store=truth_store,
-        normalizer=llm_normalizer,
-        resolver=resolver,
+        retriever=get_retriever(),
+        truth_store=get_truth_store(),
+        normalizer=get_llm_normalizer(),
+        resolver=get_resolver(),
     )
